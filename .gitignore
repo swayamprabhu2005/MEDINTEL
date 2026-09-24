@@ -1,0 +1,72 @@
+# ==========================================
+# MEDINTEL Git Ignore
+# ==========================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# --- Virtual Environments ---
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Model Weights & Binary Checkpoints ---
+# (Train via Google Colab GPU and place locally; excluded from Git)
+backend/weights/*.onnx
+backend/weights/*.pt
+backend/weights/*.pth
+backend/weights/*.bin
+backend/weights/*.h5
+backend/weights/*.safetensors
+!backend/weights/.gitkeep
+
+# --- Datasets & DICOM ---
+dataset/
+datasets/
+*.dcm
+*.tar.gz
+*.zip
+
+# --- Local Databases & Logs ---
+*.db
+*.sqlite3
+medintel.db
+backend/medintel.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Environment Secrets & API Keys ---
+.env
+.env.local
+.env.*.local
+kaggle.json
+*.pem
+*.key
+
+# --- Node / Frontend ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+.eslintcache
+
+# --- IDE & Operating System ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini

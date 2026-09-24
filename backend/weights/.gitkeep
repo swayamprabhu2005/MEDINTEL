@@ -1,0 +1,2 @@
+# Keep this directory in Git version control
+# Model weights (.pt, .onnx) are ignored via .gitignore
