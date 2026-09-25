@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 
 from backend.app.cv.inference import run_vision_inference
 from backend.app.cv.gradcam import generate_saliency_heatmap
+from backend.app.cv.labels import MODALITIES
 from backend.app.rag.retriever import rag_retriever
 from backend.app.search.pubmed import search_pubmed
 from backend.app.agents.specialists import (
@@ -17,7 +18,7 @@ from backend.app.memory.database import record_case_trajectory
 
 class MasterOrchestrator:
     """
-    Coordinates dynamic multi-agent clinical decision-support workflows.
+    Coordinates dynamic multi-agent clinical decision-support workflows across all 8 modalities.
     Profiles cases, dynamically executes specialist agents, and logs auditable trajectories.
     """
     def __init__(self):
@@ -31,7 +32,8 @@ class MasterOrchestrator:
         self,
         image_bytes: Optional[bytes] = None,
         symptoms: str = "",
-        case_domain: str = "chest_radiology"
+        case_domain: str = "chest_radiology",
+        modality: str = "chest_xray"
     ) -> Dict[str, Any]:
         case_id = f"CASE-{uuid.uuid4().hex[:8].upper()}"
         start_time = time.time()
@@ -41,9 +43,9 @@ class MasterOrchestrator:
         vision_data = None
         heatmap_data = None
         if image_bytes:
-            vision_data = run_vision_inference(image_bytes)
-            top_pathology = vision_data.get("top_finding", {}).get("pathology", "Pneumonia")
-            heatmap_data = generate_saliency_heatmap(image_bytes, target_class=top_pathology)
+            vision_data = run_vision_inference(image_bytes, modality=modality)
+            top_pathology = vision_data.get("top_finding", {}).get("pathology") or MODALITIES.get(modality, MODALITIES["chest_xray"])["classes"][0]
+            heatmap_data = generate_saliency_heatmap(image_bytes, target_class=top_pathology, modality=modality)
             
             # Agent 1: Vision Analyst
             v_trace = self.vision_agent.run(vision_data)
@@ -52,13 +54,14 @@ class MasterOrchestrator:
             v_trace = {"output": "No imaging provided for this case."}
 
         # 2. Clinical Context Subsystem (RAG)
-        retrieved_chunks = rag_retriever.retrieve(symptoms or "chest radiology examination", top_k=3)
+        context_query = symptoms or f"{modality.replace('_', ' ')} examination"
+        retrieved_chunks = rag_retriever.retrieve(context_query, top_k=3)
         c_trace = self.context_agent.run(symptoms, retrieved_chunks)
         agent_traces.append(c_trace)
 
         # 3. Medical Evidence Search Subsystem (PubMed)
-        search_query = vision_data.get("top_finding", {}).get("pathology", "Chest Radiography") if vision_data else "Cardiopulmonary disease"
-        pubmed_articles = search_pubmed(search_query, max_results=3)
+        search_query = vision_data.get("top_finding", {}).get("pathology") if vision_data else modality.replace('_', ' ')
+        pubmed_articles = search_pubmed(f"{search_query} clinical management", max_results=3)
         r_trace = self.research_agent.run(search_query, pubmed_articles)
         agent_traces.append(r_trace)
 
@@ -84,7 +87,7 @@ class MasterOrchestrator:
         trajectory_record = {
             "case_id": case_id,
             "case_profile": {
-                "modality": "chest_xray" if image_bytes else "clinical_text",
+                "modality": modality,
                 "domain": case_domain,
                 "complexity": "high" if vision_data and vision_data.get("detected_count", 0) > 1 else "moderate"
             },
@@ -101,6 +104,7 @@ class MasterOrchestrator:
 
         return {
             "case_id": case_id,
+            "modality": modality,
             "total_latency_ms": total_latency_ms,
             "vision_analysis": vision_data,
             "saliency_heatmap": heatmap_data,

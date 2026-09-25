@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, UploadCloud, Sparkles, Send, CheckCircle2, BookOpen, Quote, RefreshCw } from 'lucide-react';
 
 export default function DocumentRAG() {
   const [fileToUpload, setFileToUpload] = useState(null);
@@ -14,7 +16,6 @@ export default function DocumentRAG() {
     }
   ]);
 
-  // Load sample clinical radiology note
   const handleLoadSampleDocument = async () => {
     setIsUploading(true);
     const sampleText = `
@@ -132,31 +133,42 @@ RECOMMENDATION: Clinical correlation with sputum cultures, empiric antibiotic th
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginTop: '1rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginTop: '0.5rem' }}>
       
-      {/* Left Column: Document Upload & Index Management */}
+      {/* Left Column: Document Upload & Chunker Info */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        <div className="card">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card"
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Clinical Document Store</h3>
-            <button 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <BookOpen size={18} color="#0284c7" />
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Clinical Document Store</h3>
+            </div>
+            <motion.button 
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={handleLoadSampleDocument}
               disabled={isUploading}
               className="btn btn-secondary"
               style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
             >
-              📄 Load Sample Report
-            </button>
+              <Sparkles size={13} color="#0284c7" />
+              <span>Sample Report</span>
+            </motion.button>
           </div>
 
           <div
             style={{
-              border: '2px dashed var(--border-color)',
-              borderRadius: '10px',
-              padding: '1.5rem 1rem',
+              border: '2px dashed #cbd5e1',
+              borderRadius: '12px',
+              padding: '1.75rem 1rem',
               textAlign: 'center',
-              background: 'rgba(15, 23, 42, 0.4)',
-              cursor: 'pointer'
+              background: '#f8fafc',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
             onClick={() => document.getElementById('rag-file-input').click()}
           >
@@ -167,8 +179,8 @@ RECOMMENDATION: Clinical correlation with sputum cultures, empiric antibiotic th
               onChange={handleFileUpload}
               style={{ display: 'none' }}
             />
-            <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📑</p>
-            <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <UploadCloud size={32} color="#0284c7" style={{ margin: '0 auto 0.5rem auto' }} />
+            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isUploading ? 'Parsing & Indexing...' : 'Upload Medical Report / PDF'}
             </p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
@@ -177,18 +189,27 @@ RECOMMENDATION: Clinical correlation with sputum cultures, empiric antibiotic th
           </div>
 
           {uploadStatus && (
-            <div style={{ marginTop: '1rem', background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.8rem' }}>
-              <p style={{ color: '#34d399', fontWeight: 600 }}>✓ File Indexed</p>
-              <p style={{ color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{uploadStatus.filename}</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Chunks: {uploadStatus.chunks_indexed} | Total in DB: {uploadStatus.total_documents_in_retriever}</p>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{ marginTop: '1rem', background: '#ecfdf5', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #a7f3d0', fontSize: '0.8rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#059669', fontWeight: 700 }}>
+                <CheckCircle2 size={16} />
+                <span>Document Successfully Indexed</span>
+              </div>
+              <p style={{ color: '#334155', marginTop: '0.25rem', fontWeight: 500 }}>{uploadStatus.filename}</p>
+              <p style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                Chunks: <strong>{uploadStatus.chunks_indexed}</strong> | Total in Database: <strong>{uploadStatus.total_documents_in_retriever}</strong>
+              </p>
+            </motion.div>
           )}
 
           <div style={{ marginTop: '1.25rem' }}>
-            <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+            <h4 style={{ fontSize: '0.785rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               💡 Example Grounded Queries:
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
               {[
                 'What changed between the previous and latest scan?',
                 'Is there any evidence of pleural effusion or consolidation?',
@@ -199,34 +220,43 @@ RECOMMENDATION: Clinical correlation with sputum cultures, empiric antibiotic th
                   onClick={() => setQuery(ex)}
                   style={{
                     textAlign: 'left',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid var(--border-color)',
-                    padding: '0.45rem 0.75rem',
-                    borderRadius: '6px',
-                    color: '#94a3b8',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer'
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    color: '#334155',
+                    fontSize: '0.775rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0284c7'; e.currentTarget.style.background = '#f0f9ff'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
                 >
                   "{ex}"
                 </button>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Right Column: Grounded Clinical Chat */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '620px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="card" 
+        style={{ display: 'flex', flexDirection: 'column', height: '640px' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
           <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Grounded Document Assistant</h3>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Answers backed by citations from uploaded clinical documents</p>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Grounded Document Assistant</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Answers backed by verifiable citations from uploaded records</p>
           </div>
           <span className="badge badge-verified">Hybrid BM25 + Vector</span>
         </div>
 
-        {/* Chat Messages */}
+        {/* Chat Feed */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', paddingRight: '0.5rem' }}>
           {chatHistory.map((msg, idx) => {
             const isUser = msg.role === 'user';
@@ -234,51 +264,55 @@ RECOMMENDATION: Clinical correlation with sputum cultures, empiric antibiotic th
 
             if (isSystem) {
               return (
-                <div key={idx} style={{ textAlign: 'center', fontSize: '0.75rem', color: '#38bdf8', background: 'rgba(14, 165, 233, 0.1)', padding: '0.4rem 0.8rem', borderRadius: '6px', margin: '0 auto' }}>
+                <div key={idx} style={{ textAlign: 'center', fontSize: '0.75rem', color: '#0369a1', background: '#f0f9ff', padding: '0.4rem 0.85rem', borderRadius: '8px', margin: '0 auto', border: '1px solid #bae6fd' }}>
                   ℹ️ {msg.text}
                 </div>
               );
             }
 
             return (
-              <div
+              <motion.div
                 key={idx}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
                 style={{
                   alignSelf: isUser ? 'flex-end' : 'flex-start',
                   maxWidth: '85%',
-                  background: isUser ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : 'rgba(15, 23, 42, 0.85)',
-                  border: isUser ? 'none' : '1px solid var(--border-color)',
-                  borderRadius: isUser ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                  padding: '0.85rem 1rem',
+                  background: isUser ? 'linear-gradient(135deg, #0284c7, #0369a1)' : '#f8fafc',
+                  border: isUser ? 'none' : '1px solid #e2e8f0',
+                  borderRadius: isUser ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                  padding: '0.85rem 1.15rem',
                   fontSize: '0.85rem',
                   color: isUser ? '#ffffff' : 'var(--text-primary)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                  boxShadow: isUser ? '0 4px 12px rgba(2, 132, 199, 0.25)' : 'var(--shadow-sm)'
                 }}
               >
                 <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{msg.text}</p>
                 {msg.citations && msg.citations.length > 0 && (
-                  <div style={{ marginTop: '0.65rem', borderTop: '1px solid rgba(255, 255, 255, 0.15)', paddingTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#93c5fd', fontWeight: 600 }}>Citations:</span>
+                  <div style={{ marginTop: '0.75rem', borderTop: '1px solid rgba(226, 232, 240, 0.8)', paddingTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: '#0369a1', fontWeight: 700 }}>
+                      <Quote size={11} /> Citations:
+                    </div>
                     {msg.citations.map((c, i) => (
-                      <span key={i} style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.7rem' }}>
+                      <span key={i} style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.15rem 0.45rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid #bae6fd' }}>
                         {c}
                       </span>
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
           {isQuerying && (
-            <div style={{ alignSelf: 'flex-start', color: '#38bdf8', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', animation: 'pulse 1s infinite' }} />
+            <div style={{ alignSelf: 'flex-start', color: '#0284c7', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f0f9ff', padding: '0.5rem 0.85rem', borderRadius: '8px' }}>
+              <RefreshCw size={14} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
               Searching hybrid indices & synthesizing grounded answer...
             </div>
           )}
         </div>
 
-        {/* Query Input */}
-        <form onSubmit={handleSendQuery} style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.85rem' }}>
+        {/* Input Bar */}
+        <form onSubmit={handleSendQuery} style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.85rem' }}>
           <input
             className="input"
             type="text"
@@ -286,11 +320,19 @@ RECOMMENDATION: Clinical correlation with sputum cultures, empiric antibiotic th
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask a question about the uploaded medical documents..."
           />
-          <button type="submit" disabled={!query.trim() || isQuerying} className="btn btn-primary">
-            Ask RAG
-          </button>
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit" 
+            disabled={!query.trim() || isQuerying} 
+            className="btn btn-primary"
+            style={{ padding: '0.65rem 1.25rem' }}
+          >
+            <Send size={15} />
+            <span>Ask RAG</span>
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
 
     </div>
   );
