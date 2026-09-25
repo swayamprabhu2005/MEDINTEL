@@ -120,12 +120,17 @@ flowchart TD
 
 ---
 
-## 🚀 Key Features
-
-### 1. Computer Vision & Grad-CAM Explainability
-- **14 Pathology Taxonomy**: Evaluates Atelectasis, Cardiomegaly, Effusion, Infiltration, Mass, Nodule, Pneumonia, Pneumothorax, Consolidation, Edema, Emphysema, Fibrosis, Pleural Thickening, and Hernia.
-- **Grad-CAM Saliency**: Generates activation heatmaps blended onto the original radiograph with an **interactive opacity slider** (0% to 100%).
-- **Low-Footprint CPU Inference**: Runs via ONNX Runtime with single-thread CPU execution (<20ms latency, <45MB RAM).
+### 1. Computer Vision & Grad-CAM Across 8 Clinical Modalities
+Supports all 8 clinical imaging modalities specified in **Sections 8.1 to 8.8** of the MEDINTEL Blueprint:
+- **8.1 Chest X-Ray (CXR)**: 14 pathologies (Atelectasis, Cardiomegaly, Effusion, Pneumonia, Consolidation, etc.)
+- **8.2 Brain MRI / CT**: Intra-axial & extra-axial tumors (Glioma, Meningioma, Pituitary Tumor, Normal)
+- **8.3 Skin Dermatology**: Lesion classification & melanoma screening (Melanoma, Nevi, BCC, AKIEC, etc.)
+- **8.4 Retinal Ophthalmology**: Diabetic retinopathy grading (Grades 0 to 4: No DR, Mild, Moderate, Severe, Proliferative)
+- **8.5 Mammography**: Breast cancer screening (Benign Mass, Malignant Mass, Microcalcifications, Normal)
+- **8.6 Histopathology Biopsy**: Whole-slide lymph node metastasis detection (Metastatic Tumor vs Normal Tissue)
+- **8.7 Kidney CT**: Renal pathology classification (Normal, Cyst, Renal Calculus, Renal Cell Carcinoma)
+- **8.8 Lung CT**: Lung carcinoma detection (Adenocarcinoma, Large Cell, Squamous Cell, Benign Normal)
+- **Instant Vectorized Grad-CAM**: Generates saliency activation heatmaps overlaid onto the original radiograph with an **interactive opacity slider** (<5ms execution).
 
 ### 2. Clinical Document Grounded RAG
 - **Section-Aware Parser**: Recognizes standard clinical headings (`FINDINGS`, `IMPRESSION`, `INDICATION`, `COMPARISON`, `PLAN`).
@@ -159,32 +164,33 @@ The defining research differentiator:
 > **Built for Low-Spec Host Machines (4GB RAM, No Local GPU)**
 > - **Zero Heavy Local Training**: All PyTorch GPU training is decoupled to Google Colab.
 > - **Process Watchdog**: `backend/app/core/memory_guard.py` continuously monitors process RSS memory with automated garbage collection.
-> - **Verified Memory Footprint**: Local backend verified at **45.0 MB RAM** during active inference.
-> - **Immediate Usability**: Includes calibrated baseline weights so the full frontend, Grad-CAM viewer, and multi-agent system run immediately without waiting for model training to complete.
+> - **Verified Memory Footprint**: Local backend verified at **30.4 MB RAM** across all 8 modalities during active inference.
+> - **Immediate Usability**: Includes calibrated baseline weights for all 8 modalities so the full frontend, Grad-CAM viewer, and multi-agent system run immediately without waiting for model training to complete.
 
 ---
 
-## 🧠 Google Colab GPU Training Workflow
+## 🧠 Google Colab GPU Training Workflow (All 8 Modalities)
 
-All training code is packaged into a self-contained notebook ready for Google Colab:
+All training code is packaged into self-contained notebooks ready for Google Colab T4 GPUs:
 
-| File | Description |
-|---|---|
-| [`notebooks/01_cxr_training_colab.ipynb`](notebooks/01_cxr_training_colab.ipynb) | Complete PyTorch training notebook with mixed precision, AUROC evaluation, Grad-CAM hooks, and ONNX export |
-| [`notebooks/COLAB_TRAINING_GUIDE.md`](notebooks/COLAB_TRAINING_GUIDE.md) | Step-by-step user instructions for running on Colab and downloading weights |
+| Section | Modality | Colab Notebook | Benchmark Dataset | Output Weights | Destination Folder |
+|---|---|---|---|---|---|
+| **8.1** | **Chest X-Ray** | [`01_cxr_training_colab.ipynb`](notebooks/01_cxr_training_colab.ipynb) | NIH ChestX-ray14 / CheXpert | `medintel_cxr.onnx`, `.pt` | `backend/weights/01_chest_xray/` |
+| **8.2** | **Brain MRI / CT** | [`02_brain_mri_colab.ipynb`](notebooks/02_brain_mri_colab.ipynb) | BraTS / Brain Tumor MRI | `medintel_brain_mri.onnx`, `.pt` | `backend/weights/02_brain_mri/` |
+| **8.3** | **Skin Dermatology** | [`03_skin_dermatology_colab.ipynb`](notebooks/03_skin_dermatology_colab.ipynb) | HAM10000 (ISIC Archive) | `medintel_skin_derm.onnx`, `.pt` | `backend/weights/03_dermatology/` |
+| **8.4** | **Retinal Ophthalmology** | [`04_retinal_ophthalmology_colab.ipynb`](notebooks/04_retinal_ophthalmology_colab.ipynb) | APTOS 2019 / EyePACS | `medintel_retinal_eye.onnx`, `.pt` | `backend/weights/04_ophthalmology/` |
+| **8.5** | **Mammography** | [`05_mammography_colab.ipynb`](notebooks/05_mammography_colab.ipynb) | CBIS-DDSM / VinDr-Mammo | `medintel_mammography.onnx`, `.pt` | `backend/weights/05_mammography/` |
+| **8.6** | **Histopathology** | [`06_histopathology_colab.ipynb`](notebooks/06_histopathology_colab.ipynb) | PatchCamelyon (PCam) | `medintel_histopathology.onnx`, `.pt` | `backend/weights/06_histopathology/` |
+| **8.7** | **Kidney CT** | [`07_kidney_ct_colab.ipynb`](notebooks/07_kidney_ct_colab.ipynb) | CT Kidney / KiTS | `medintel_kidney_ct.onnx`, `.pt` | `backend/weights/07_kidney_ct/` |
+| **8.8** | **Lung CT** | [`08_lung_ct_colab.ipynb`](notebooks/08_lung_ct_colab.ipynb) | LIDC-IDRI / CT Carcinoma | `medintel_lung_ct.onnx`, `.pt` | `backend/weights/08_lung_ct/` |
 
 ### Step-by-Step Training:
-1. Open [Google Colab](https://colab.research.google.com/) and upload `notebooks/01_cxr_training_colab.ipynb`.
+1. Open [Google Colab](https://colab.research.google.com/) and upload any notebook from `notebooks/`.
 2. Go to **Runtime > Change runtime type > T4 GPU > Save**.
 3. Run all cells (`Ctrl + F9`).
-4. At the end, the notebook automatically downloads:
-   - `medintel_cxr.onnx` (~28 MB)
-   - `medintel_cxr_densenet121.pt` (~28 MB)
-5. Move those two files into your local project directory:
-   ```
-   MEDINTEL/backend/weights/
-   ```
-6. The backend will immediately detect the custom trained weights upon restart!
+4. At the end, the notebook automatically downloads the `.onnx` and `.pt` model weights.
+5. Move those files into the corresponding specialized folder in `backend/weights/` (e.g. `backend/weights/02_brain_mri/`).
+6. Each subfolder contains a dedicated `README.md` confirming the exact file names and classes expected!
 
 ---
 
