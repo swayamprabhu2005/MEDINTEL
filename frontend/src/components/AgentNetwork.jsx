@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, ShieldCheck, Clock, CheckCircle2, AlertTriangle, Scan, FileText, Search, Sparkles, ShieldAlert } from 'lucide-react';
+import { Bot, ShieldCheck, Clock, CheckCircle2, AlertTriangle, Scan, FileText, Search, Sparkles, ShieldAlert, FileDown } from 'lucide-react';
+import { exportClinicalAuditPDF } from '../utils/pdfExport';
 
 export default function AgentNetwork({ orchestratedData }) {
   const [activeStep, setActiveStep] = useState(0);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const traces = orchestratedData?.agent_traces || [
     {
@@ -48,6 +50,26 @@ export default function AgentNetwork({ orchestratedData }) {
 
   const stepIcons = [Scan, FileText, Search, Sparkles, ShieldAlert];
 
+  const handleExportPDF = async () => {
+    setIsExportingPdf(true);
+    try {
+      await exportClinicalAuditPDF({
+        caseId: orchestratedData?.case_id || `MEDINTEL-AUDIT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+        modalityLabel: orchestratedData?.modality ? orchestratedData.modality.replace('_', ' ').toUpperCase() : '8.1 Chest X-Ray',
+        symptoms: orchestratedData?.patient_symptoms || 'Patient presented with acute clinical indication.',
+        originalImageUrl: orchestratedData?.saliency_heatmap?.original_image_base64 || orchestratedData?.vision_analysis?.saliency?.original_image_base64 || null,
+        gradcamImageUrl: orchestratedData?.saliency_heatmap?.overlay_base64 || orchestratedData?.vision_analysis?.saliency?.overlay_base64 || null,
+        analysisResult: orchestratedData?.vision_analysis,
+        activePathology: orchestratedData?.vision_analysis?.top_finding?.pathology || 'Primary Pathology',
+        orchestratedData: orchestratedData
+      });
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       
@@ -56,7 +78,7 @@ export default function AgentNetwork({ orchestratedData }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="card" 
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff' }}
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', flexWrap: 'wrap', gap: '0.75rem' }}
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -79,13 +101,35 @@ export default function AgentNetwork({ orchestratedData }) {
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.45rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-          <Clock size={16} color="#0284c7" />
-          <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Pipeline Latency</span>
-            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-              {orchestratedData?.total_latency_ms || 653} ms
-            </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleExportPDF}
+            disabled={isExportingPdf}
+            className="btn btn-primary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.5rem 0.9rem',
+              fontSize: '0.785rem',
+              fontWeight: 700,
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.2)'
+            }}
+          >
+            <FileDown size={15} />
+            <span>{isExportingPdf ? 'Exporting...' : 'Export Audit PDF'}</span>
+          </motion.button>
+
+          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.45rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+            <Clock size={16} color="#0284c7" />
+            <div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Pipeline Latency</span>
+              <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
+                {orchestratedData?.total_latency_ms || 653} ms
+              </span>
+            </div>
           </div>
         </div>
       </motion.div>
