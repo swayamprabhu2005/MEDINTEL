@@ -31,6 +31,7 @@
   - [3. Live Biomedical Evidence Engine (PubMed)](#3-live-biomedical-evidence-engine-pubmed)
   - [4. Heterogeneous Multi-Agent Consensus](#4-heterogeneous-multi-agent-consensus)
   - [5. Self-Improving Experience Trajectory Loop](#5-self-improving-experience-trajectory-loop)
+  - [6. One-Click Clinical Audit PDF Report Export](#6-one-click-clinical-audit-pdf-report-export)
 - [Hardware & Low-RAM Engineering](#-hardware--low-ram-engineering)
 - [Google Colab GPU Training Workflow](#-google-colab-gpu-training-workflow)
 - [Quickstart Guide](#-quickstart-guide)
@@ -155,6 +156,11 @@ Rather than forcing a single LLM to perform all tasks, MEDINTEL coordinates spec
 The defining research differentiator:
 - Every case execution logs an auditable trace: `case_id`, modality, agents invoked, models used, search queries, evidence PMIDs, verifier score, and failure categorization.
 - An **Experience-Driven Policy Optimizer** evaluates historical failure patterns to dynamically adapt routing thresholds (e.g. lowering PubMed trigger thresholds for complex or borderline cases).
+
+### 6. One-Click Clinical Audit PDF Report Export
+- **Hospital-Ready Audit Documentation**: Instant client-side PDF generation formatted for electronic health record (EHR) review.
+- **Side-by-Side Saliency Embeds**: High-resolution side-by-side rendering of the original medical scan alongside the pixel-aligned Grad-CAM saliency overlay.
+- **Full Trace Provenance**: Compiles calibrated differential diagnosis probabilities, cited clinical document excerpts, PubMed guideline PMIDs, and the official **Skeptic Verifier 14-Point Failure Audit Stamp** (`VERIFIED` / `FLAGGED`) with cryptographic audit trace verification.
 
 ---
 

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, Sparkles, Layers, Sliders, Play, CheckCircle2, 
-  AlertTriangle, AlertCircle, Info, ChevronRight, Eye
+  AlertTriangle, AlertCircle, Info, ChevronRight, Eye, FileDown
 } from 'lucide-react';
+import { exportClinicalAuditPDF } from '../utils/pdfExport';
 
 const MODALITIES = [
   { id: 'chest_xray', label: '8.1 Chest X-Ray', icon: '🩻', defaultSymptom: '65-year-old male with persistent cough, mild fever, and shortness of breath.' },
@@ -27,6 +28,7 @@ export default function MultimodalAnalysis({ onOrchestrateComplete }) {
   const [showHeatmapOnly, setShowHeatmapOnly] = useState(false);
   const [symptomsInput, setSymptomsInput] = useState(MODALITIES[0].defaultSymptom);
   const [isOrchestrating, setIsOrchestrating] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const handleModalityChange = (modId) => {
     setSelectedModality(modId);
@@ -171,6 +173,30 @@ export default function MultimodalAnalysis({ onOrchestrateComplete }) {
       console.error('Orchestration error:', err);
     } finally {
       setIsOrchestrating(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!analysisResult) return;
+    setIsExportingPdf(true);
+    try {
+      const curMod = MODALITIES.find((m) => m.id === selectedModality);
+      await exportClinicalAuditPDF({
+        caseId: `MEDINTEL-${selectedModality.toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+        modalityLabel: curMod?.label || '8.1 Chest X-Ray',
+        symptoms: symptomsInput,
+        originalImageUrl: previewUrl,
+        gradcamImageUrl: showHeatmapOnly 
+          ? analysisResult?.saliency?.heatmap_base64 
+          : (analysisResult?.saliency?.overlay_base64 || analysisResult?.saliency?.original_image_base64),
+        analysisResult: analysisResult,
+        activePathology: activePathology,
+        orchestratedData: null
+      });
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 
@@ -427,12 +453,37 @@ export default function MultimodalAnalysis({ onOrchestrateComplete }) {
                   Calibrated probabilities & Grad-CAM visual hotspots
                 </span>
               </div>
-              {analysisResult && (
-                <span className={`badge ${analysisResult.status === 'ABNORMAL' ? 'badge-high' : 'badge-low'}`}>
-                  {analysisResult.status === 'ABNORMAL' ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
-                  {analysisResult.status}
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {analysisResult && (
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleExportPDF}
+                    disabled={isExportingPdf}
+                    className="btn btn-secondary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      fontSize: '0.75rem',
+                      padding: '0.35rem 0.65rem',
+                      color: '#0284c7',
+                      borderColor: '#bae6fd',
+                      background: '#f0f9ff',
+                      fontWeight: 600
+                    }}
+                  >
+                    <FileDown size={14} color="#0284c7" />
+                    <span>{isExportingPdf ? 'Exporting...' : 'Export Audit PDF'}</span>
+                  </motion.button>
+                )}
+                {analysisResult && (
+                  <span className={`badge ${analysisResult.status === 'ABNORMAL' ? 'badge-high' : 'badge-low'}`}>
+                    {analysisResult.status === 'ABNORMAL' ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
+                    {analysisResult.status}
+                  </span>
+                )}
+              </div>
             </div>
 
             {analysisResult ? (
@@ -514,6 +565,30 @@ export default function MultimodalAnalysis({ onOrchestrateComplete }) {
                     );
                   })}
                 </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={handleExportPDF}
+                  disabled={isExportingPdf}
+                  className="btn btn-secondary"
+                  style={{
+                    width: '100%',
+                    marginTop: '0.85rem',
+                    padding: '0.65rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    fontWeight: 700,
+                    color: '#0284c7',
+                    borderColor: '#bae6fd',
+                    background: '#f0f9ff'
+                  }}
+                >
+                  <FileDown size={16} color="#0284c7" />
+                  <span>{isExportingPdf ? 'Generating PDF...' : '1-Click Export Clinical Audit Report (PDF)'}</span>
+                </motion.button>
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
